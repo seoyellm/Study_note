@@ -1,0 +1,164 @@
+## SQL
+
+ C : create(insert)
+ R : read(select)
+ U : update(update)
+ D : delete(delete)
+
+*ctrl + enter : 실행
+
+
+
+## 테이블 생성
+
+```sql
+create table test(
+userid varchar2(10) not null primary key,
+userpw number(5),
+usernm varchar2(20)
+);
+```
+
+
+
+## 데이터 입력
+
+```sql
+select * from test;  -->테이블의 모든 데이터 조회
+
+inset into test
+values('hong',2222,'홍길동');
+
+rollback;
+
+```
+
+
+
+## 수정 명령어
+
+```sql
+1.
+update test
+set userpw=9999  -->모두 변경
+where userid-'hong';  -->아이디가 hong인 경우에만
+
+commit
+
+2.
+insert into test
+values('park',2222,'박상무')
+
+commit
+
+update test
+set userpw=9999
+where (userid='hong') or (userid='kim');
+
+3.
+update test
+set userpw=3333
+where usernm like '%길동';  -->이름이 ~길동인 사람의 패스워드를 3333으로 바꿔라
+
+commit
+
+<삭제 명령어>
+1.
+delete from test; --> 모든 데이터 삭제
+select * from test;
+rollback; -->이전으로 되돌리기
+
+2.
+delete * from test
+where userid='kim' -->아이디가 kim인 사람의 데이터만 삭제
+```
+
+
+
+## 실습
+
+- 프로퍼티(property) : 기본 뼈대
+
+```sql
+1.테이블명 : members
+  컬럼 : 
+	user_seq number(10)
+	user_point number(5,2) ->총5자리 소수점2자리    1234.5(o), 1234.55(x), 12.555(x)
+	user_name varchar2(10)
+	user_regdate date    -->'2020-10-10'
+
+2.다음 2건의 회원 데이터 입력
+1 100.55 홍길동 '2023-01-17 11:20:33'
+2 200.55 아무개 '2023-01-17 12:25:33'
+
+3.홍길동의 포인트(user_point)를 40.55으로 변경
+4.아무개 회원 삭제
+
+
+create table members(
+	user_seq number(10), 
+	user_point number(5,2), 
+	user_name varchar2(10),
+);   
+
+insert into members
+values(1,100.55,'홍길동',sysdate);
+
+insert into members
+values(2, 200.55, '아무개', '2023-01-17 12:25:33');
+
+commit;
+
+update members
+set user_point=40.55
+where user_name='홍길동';
+
+delete from members
+where user_name='아무개';
+
+[도구]-[환경설정]-날짜형식,시간 기록 형식,시간기록TZ형식:YYYY-MM-dd HH24:MI:SS
+
+<날짜 입력>
+create table test2(
+userid varchar2(10),
+regdate date
+);
+좌측 테이블선택-새로고침
+
+1.
+insert into test2
+values('kim',sysdate);  -->sysdate :오라클 오늘날짜,시간
+select * from test2;
+2.
+insert into test2
+values('kim', '2020-01-01');  -->년월일만 입력해도 실행 가능 
+select * from test2;
+3.
+insert into test2
+values('kim', '2020-01-01 23:59:59'); 
+select * from test2;
+4.
+insert into test2
+values('hong', '2020/01/01 23:59:59');  -->구분기호와 무관하게 실행 가능 
+select * from test2;
+5.
+insert into test2
+values('kim3', to date('20-01-07'),'DD-MM-YY'); 
+select * from test2;
+```
+
+
+
+## 테이블 삭제
+
+- drop table 테이블명; -->rollback 불가능
+
+
+
+## IDE툴
+
+통합개발환경 -->파이참
+a=10
+b=20
+print(a+b)
+

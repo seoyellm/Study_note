@@ -1,0 +1,478 @@
+## 모의시험 심화
+
+```sql
+- 1.EMP 테이블에서 부서 인원이 4명보다 많은 부서의 부서번호, 인원수 , 급여의 합을 출력하시오
+  SELECT DEPTNO, COUNT(EMPNO), SUM(SAL)
+  FROM EMP
+  GROUP BY DEPTNO
+  HAVING COUNT(*) >4;
+
+- 2.EMP 테이블에서 가장 많은 사원이 속해있는 부서번호와 사원수를 출력하시오.
+  SELECT DEPTNO AS 부서번호, COUNT(*) 
+  FROM EMP
+  GROUP BY DEPTNO
+  HAVING COUNT(*) = (SELECT MAX(COUNT(*)) FROM EMP GROUP BY DEPTNO);
+
+- 3.EMP테이블에서 가장 많은 사원을 갖는 MGR의 사원번호를 출력하시오
+  SELECT MGR AS 사원번호
+  FROM EMP
+  GROUP BY MGR
+  HAVING COUNT(EMPNO) = (SELECT MAX(COUNT(EMPNO)) FROM EMP GROUP BY MGR);
+
+- 4.EMP테이블에서 부서번호가 10인 사원수와 부서번호가 30인 사원수를 각각 출력하시오
+  SELECT COUNT(DECODE(DEPTNO,10,0)) AS "10인사원수",
+   COUNT(DECODE(DEPTNO,30,0)) AS "30인사원수"
+  FROM EMP;
+
+*세로줄을 가로줄로 변경 -> 피벗화 한다
+
+​		--1)
+ 		SELECT
+​    		(SELECT COUNT(EMPNO) FROM EMP WHERE DEPTNO=10)AS CNT10,
+​    		(SELECT COUNT(EMPNO) FROM EMP WHERE DEPTNO=10)AS CNT30
+​		FROM DUAL;
+
+​		--2)
+​		SELECT T1.CNT10, T2.CNT30
+​		FROM
+​    		(SELECT COUNT(EMPNO) AS CNT10 FROM EMP WHERE DEPTNO=10)  T1,
+​    		(SELECT COUNT(EMPNO) AS CNT30 FROM EMP WHERE DEPTNO=30) T2 ;
+​    
+
+- 5. EMP테이블에서 사원번호가 7521인 사원의 직업과 같고 사원번호가 7934인 사원의 급여보다 많은 사원의 사원번호, 이름, 직업, 급여를 출력하시오
+     SELECT EMPNO, ENAME, JOB, SAL
+     FROM EMP
+     WHERE JOB = ( SELECT JOB FROM EMP WHERE EMPNO=7521)
+      AND SAL > (SELECT SAL FROM EMP WHERE EMPNO=7934);
+
+- 6.직업별로 최소 급여를 받는 사원의 정보를 사원번호, 이름, 업무, 부서명을 출력하시오
+
+  --1)
+
+  SELECT E.EMPNO, E.ENAME , E.JOB, D.DNAME
+  FROM EMP E, DEPT D
+  WHERE E.DEPTNO=D.DEPTNO AND 
+
+  E.SAL = (SELECT MIN(SAL) FROM EMP);
+
+  
+
+  --2)
+
+​		SELECT E.EMPNO, E.ENAME , E.JOB, D.DNAME
+​		FROM EMP E, DEPT D
+​		WHERE E.DEPTNO=D.DEPTNO 
+​    		AND (JOB,SAL) IN (SELECT JOB, MIN(SAL) FROM EMP GROUP BY JOB);
+
+- 7.각 사원 별 시급을 계산하여 부서번호, 사원이름, 시급을 출력하시오
+  --  조건1. 한달 근무일수는 20일, 하루 근무시간은 8시간이다.
+  --  조건2. 시급은 소수 두 번째 자리에서 반올림한다.
+  --  조건3. 부서별로 오름차순 정렬
+  --  조건4. 시급이 많은 순으로 출력
+  SELECT DEPTNO, ENAME, ROUND((SAL/20)/8,1) AS TS
+  FROM EMP
+  ORDER BY DEPTNO,TS DESC;
+
+- 8.각 사원별 커미션이 0 또는 NULL이고 부서위치가 'GO'로 끝나는 사원의 정보를 사원번호, 사원이름, 커미션, 부서번호, 부서명, 부서위치를 출력하여라
+  --  조건1. 보너스가 NULL이면 0으로 출력
+  SELECT E.EMPNO, E.ENAME, NVL(E.COMM,0) AS COMM, E.DEPTNO, D.DNAME, D.LOC
+  FROM EMP E, DEPT D
+  WHERE E.DEPTNO=D.DEPTNO AND NVL(COMM,0)=0 AND D.LOC LIKE '%GO';
+
+- 9. 각 부서 별 평균 급여가 2000 이상이면 초과, 그렇지 않으면 미만을 출력하시오
+     SELECT DEPTNO,
+      (CASE WHEN NVL(AVG(SAL),0) >= 2000 THEN '초과'
+      ELSE '미만'
+      END) AS AVGS
+     FROM EMP 
+     GROUP BY DEPTNO;
+
+- 10.각 부서별 입사일이 가장 오래된 사원을 한 명씩 선별해 사원번호, 사원명, 부서번호, 입사일을 출력하시오
+  SELECT EMPNO, ENAME, DEPTNO, HIREDATE
+  FROM EMP
+  WHERE (DEPTNO,HIREDATE) IN (SELECT DEPTNO, MIN(HIREDATE) FROM EMP GROUP BY DEPTNO);
+
+- 11. 1980~1982년 사이에 입사된 각 부서별 사원수를 부서번호, 부서명, 입사1980, 입사 1981, 입사 1982로 출력하시오
+      SELECT d.DEPTNO , D.DNAME,
+      count(CASE WHEN extract(year from e.hiredate)=1980 then 1 end) "입사1980",
+      count(CASE WHEN extract(year from e.hiredate)=1981 then 1 end) "입사1981",
+      count(CASE WHEN extract(year from e.hiredate)=1982 then 1 end) "입사1982"
+      FROM EMP E, DEPT D
+      WHERE E.DEPTNO=D.DEPTNO
+
+      GROUP BY d.DEPTNO,d.dname;
+
+============================================================================
+
+- 날짜 요소 추출
+  SELECT HIREDATE, TO_CHAR(HIREDATE, 'YYYY') FROM EMP;  
+  SELECT SUBSTR(HIREDATE,0,4) FROM EMP;
+  SELECT EXTRACT(YEAR FROM HIREDATE) FROM EMP;
+
+- EXTRACT : 년, 월, 일, 시간, 분, 초 추출
+  select systimestamp,extract(second from systimestamp)
+  from dual;
+
+- 오라클 타입 변환 함수
+  --TO_CHAR(숫자/날짜, '형식') : 글자형으로 변환
+  --TO_DATE(숫자/글자, '형식') : 날자형으로 변환
+  --TO_NUMBER(날짜/글자, '형식')) : 숫자형으로 변환
+
+​	SELECT TO_CHAR(SYSDATE, 'YYYY-MM') FROM DUAL;
+
+​	select d.deptno, d.dname,
+​      	 count(decode(substr(hiredate, 0, 4), 1980, 1)) as 입사1980, --SUM도 가능
+​      	 count(decode(substr(hiredate, 0, 4), 1981, 1)) as 입사1981,
+​       	count(decode(substr(hiredate, 0, 4), 1982, 1)) as 입사1982
+​	from emp e, dept d
+​	where e.deptno=d.deptno
+​	group by d.deptno, d.dname
+​	order by deptno asc;
+
+============================================================================
+
+- 함수
+  --함수()안에 들어가는 값을 파라미터, ARGUMENTE, 인자 라고 함
+  -1)LPAD(컬럼, 글자수(확보되는 칸수), 빈공간채울값) : 빈공간이 생기면 왼쪽에 입력 값으로 채움
+  	SELECT LPAD(SAL,10,'*') FROM EMP;
+
+​	  -2)RPAD(컬럼, 글자수, 빈공간채울값) : 빈공간이 생기면 오른쪽에 입력 값으로 채움
+​		  SELECT RPAD(SAL,10,'*') FROM EMP;
+
+​	 -3)TRIM(문자 FROM 문자열) : 문자열로부터 문자를 잘라내고 나머지 글자 출력 , 
+​		--  TRIM(컬럼) : 일반적으로 앞/뒤 공백 제거에 많이 사용
+​		--LTRIM / RTRIM : 왼/오른쪽 공백 제거
+​		SELECT TRIM('S' FROM 'SSMITH') FROM DUAL;
+
+​	-4)SUBSTR(문자열,몇번째 글자부터, 몇글자) 
+​	--0번째가 없으면 1번째부터 시작 -->INDEX 는 0부터 시작하기때문에 개발자들이 0을 사용
+​	--                                     오라클에서는 1번째부터 시작
+​	--                                     0,1 둘 중 아무거나 사용해도 무방 -->모두 첫번째 글자부터 출력
+​	SELECT SUBSTR('ABCDEFG', 0,2) FROM DUAL;
+​	SELECT SUBSTR('ABCDEFG', 1,2) FROM DUAL;
+​	SELECT SUBSTR('ABCDEFG', 2,2) FROM DUAL; -->앞에서부터 2번째 글자부터 2글자 추출
+​	SELECT SUBSTR('ABCDEFG', -2,2) FROM DUAL; -->뒤에서부터 2번째 글자부터 2글자 추출
+​	SELECT SUBSTR('ABCDEFG', -2) FROM DUAL; -->뒤에서부터 2번째 글자부터 그 뒤의 글자 모두 	추출
+​	SELECT SUBSTR('ABCDEFG', 1) FROM DUAL; -->모든 글자 추출
+​	SELECT SUBSTR('ABCDEFG', -1) FROM DUAL; -->마지막 글자 추출
+
+​	-5)TO_CAHR(컬럼,<FORMAT>)
+​	--<FORMAT>
+
+​	SELECT LTRIM(TO_CHAR(SAL,'$999,999,999,999,999'))AS SAL FROM EMP; -->천단위 표시(,)
+
+============================================================================
+
+- 12.1981-5-31 이후 입사자 중 커미션이 NULL이거나 0인 사원의 커미션은 500으로 그렇지 않으면 기존 COMM을 출력하시오
+  SELECT ENAME,
+      DECODE(NVL(COMM,0),0,500,COMM) AS COMM
+  --  DECODE(COMM, NULL,500,0 , 500,COMM) AS COMM 
+  FROM EMP
+  WHERE HIREDATE > '1981-05-31';  
+
+- 13.1981-6-6 ~ 1981-12-31 입사자 중 부서명이 SALES인 사원의 부서번호, 사원명, 직업, 입사일 출력하시오
+  --  조건1. 입사일 오름차순 정렬
+  SELECT E.DEPTNO, D.DNAME, E.ENAME, E.JOB, E.HIREDATE
+  FROM EMP E, DEPT D
+  WHERE E.DEPTNO=D.DEPTNO AND E.HIREDATE BETWEEN '1981-06-06' AND '1981-12-31' AND D.DNAME='SALES';
+
+- 14.현재 시간과 현재 시간으로부터 한 시간 후의 시간을 출력하시오
+  SELECT SYSDATE AS 현재시간 , SYSDATE+1/24 AS 한시간후
+  FROM DUAL;
+
+- 15.각 부서별 사원수를 출력하시오
+  --  조건1. 부서별 사원수가 없더라도 부서번호, 부서명은 출력
+  --  조건2. 부서별 사원수가 0 인 경우 '없음' 출력
+  --  조건3. 부서번호 오름차순 정렬
+  SELECT E.DEPTNO,D.DNAME, DECODE(COUNT(E.EMPNO),0,'없음',COUNT(E.EMPNO)) AS 사원수  
+      -->한 컬럼에 다른 형의 데이터를 놓을 수 없기 때문에 원래는 TO_CHAR(COUNT(E.EMPNO)) 처리 해야함
+  FROM EMP E , DEPT D
+  WHERE E.DEPTNO(+)=D.DEPTNO
+  GROUP BY E.DEPTNO,D.DNAME;
+
+- 16. 사원 테이블에서 각 사원의 사원번호, 사원명, 매니저번호, 매니저명을 출력하시오
+      --  조건1. 각 사원의 급여는 매니저 급여보다 많거나 같다.
+      SELECT E.EMPNO AS 사원번호, E.ENAME AS 사원명, E.MGR AS 매니저사원번호, M.ENAME AS 매니저명
+      FROM EMP E, EMP M
+      WHERE E.MGR = E.EMPNO AND E.SAL >= M.SAL;
+
+- 18. 사원명의 첫 글자가 'A'이고, 처음과 끝 사이에 ' LL'이 들어가는 사원의 커미션이 COMM2 일때, 모든 사원의 커미션에 COMM2를 더한 결과를 사원명, COMM, COMM2, COMM+COMM2로 출력하시오
+
+      --1)
+
+      SELECT ENAME, NVL(COMM,0), (SELECT COMM FROM EMP WHERE ENAME LIKE 'A%LL%') AS COMM2, 
+      DECODE(COMM, NULL,0,COMM)
+          +(SELECT COMM FROM EMP WHERE ENAME LIKE 'A%LL%') AS "COMM+COMM2"
+
+      FROM EMP;
+
+      --2)
+
+​			select COMM1, COMM2, COMM1+COMM2 as COMM3
+​			from (
+​    			select nvl(comm,0) as COMM1,
+​         		 	(SELECT comm as COMM2 FROM EMP where ename like 'A%LL%' )  as COMM2
+   		 	from emp)
+​			;
+
+- 19.각 부서별로 1981-05-31 이후 입사자의 부서번호, 부서명, 사원번호, 사원명, 입사일을 출력하시오
+  --  조건1. 부서별 사원정보가 없더라도 부서번호, 부서명 출력
+  --  조건2. 부서번호 오름차순 정렬
+  --  조건3. 입사일 오름차순 정렬
+  SELECT E.DEPTNO, D.DNAME, E.EMPNO, E.ENAME, E.HIREDATE
+  FROM EMP E , DEPT D
+  WHERE E.DEPTNO(+)=D.DEPTNO AND HIREDATE(+) >'1981-05-31' 
+  --                         AND NVL(E.HIREDATE, '1981-05-31') >= '1981-05-31'
+          -->HIREDATE 에 결측이 있더라도 출력, (+)하지않으면 DEPTNO 40의 값은 사라짐
+  ORDER BY E.DEPTNO, HIREDATE;
+
+- 20.입사일로부터 지금까지 근무년수가 40년 미만인 사원의 사원번호, 사원명, 입사일, 근무년수를 출력하시오
+  --  조건1. 근무년수는 월을 기준으로 버림
+  SELECT EMPNO,ENAME,HIREDATE, TRUNC((SYSDATE-HIREDATE)/365,0) AS 근무년수
+  FROM EMP
+
+  WHERE TRUNC((SYSDATE-HIREDATE)/365,0) < 40;
+
+​		--인라인뷰
+​		SELECT *
+​		FROM(
+​    		SELECT EMPNO,ENAME,HIREDATE, TRUNC((SYSDATE-HIREDATE)/365,0) AS 근무년수
+​    		FROM EMP)
+​		WHERE 근무년수 <40;    
+```
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+## 상품주문
+
+- ```sql
+  - 1.회원별 주문 상품 통계
+    --  회원아이디 상품번호 상품갯수 구매금액
+    --  (조건 : 주문건이 없더라도 회원출력)
+  
+  ​	SELECT O.ORDER_CODE,  OG.GOOD_SEQ, OG.ORDER_PRICE 
+  ​	FROM ORDERS O, ORDERS_GOODS OG
+  ​	WHERE O.ORDER_CODE=OG.ORDER_CODE 
+  ​    	AND O.USER_SEQ = ANY(SELECT U.USER_SEQ  -->회원별 구매코드
+  ​    	FROM USERS U, ORDERS O WHERE U.USER_SEQ=O.USER_SEQ(+))
+  ​	ORDER BY O.USER_SEQ;
+  
+  ​	SELECT U.USER_SEQ,O.ORDER_CODE -->회원별 구매코드
+  ​	FROM USERS U, ORDERS O
+  
+  ​	WHERE U.USER_SEQ=O.USER_SEQ(+);
+  
+  ​	SELECT U.USER_ID, OG.GOOD_SEQ, OG.ORDER_AMOUNT,OG.ORDER_PRICE
+  ​	FROM USERS U, ORDERS O, ORDERS_GOODS OG
+  ​	WHERE U.USER_SEQ=O.USER_SEQ(+) 
+    	  AND O.ORDER_CODE=OG.ORDER_CODE(+)
+  ​	ORDER BY U.USER_ID;
+  
+  ​	--GROUP BY 사용 할 경우
+  ​	SELECT U.USER_ID, OG.GOOD_SEQ, SUM(OG.ORDER_AMOUNT),SUM(OG.ORDER_PRICE)
+  ​	FROM USERS U, ORDERS O, ORDERS_GOODS OG
+  ​	WHERE U.USER_SEQ=O.USER_SEQ(+) 
+  ​    	AND O.ORDER_CODE=OG.ORDER_CODE(+)
+  ​	GROUP BY U.USER_ID,OG.GOOD_SEQ
+  ​	ORDER BY U.USER_ID;
+  
+  - 2.업체별 공급 상품리스트
+    --  업체번호 업체명 상품번호 상품명
+    --  (조건 : 상품이 없더라도 업체명 출력)
+    SELECT C.COM_SEQ, C.COM_NAME, G.GOOD_SEQ, G.GOOD_NAME
+    FROM COMPANY C, COMPANY_GOODS CG, GOODS G
+    WHERE C.COM_SEQ=CG.COM_SEQ(+) AND G.GOOD_SEQ(+)=CG.GOOD_SEQ
+    ORDER BY C.COM_SEQ, GOOD_SEQ; 
+  
+  - 3.T상품/주문관리
+    --  주문된 상품별 판매량, 판매금액 출력
+    --  조건 :  판매량이 높은 순으로 정렬
+    --  상품번호 상품명 총판매량 총판매금액
+    SELECT G.GOOD_SEQ,G.GOOD_NAME ,COUNT(OG.ORDER_CODE) AS 판매량, OG.ORDER_PRICE AS 판매금액
+    FROM ORDERS_GOODS OG, GOODS G
+    WHERE G.GOOD_SEQ=OG.GOOD_SEQ
+    GROUP BY OG.ORDER_CODE, OG.ORDER_PRICE,G.GOOD_SEQ,G.GOOD_NAME
+  
+    ORDER BY 판매량 DESC;
+  
+  ​	select g.good_seq,  g.good_name, 
+  ​       	sum(og.order_amount) as order_amount, sum(og.order_price)  as order_price
+  ​	from goods g, orders_goods og
+  ​	where g.good_seq = og.good_seq
+  ​	group by g.good_seq,  g.good_name
+  ​	order by order_amount desc, order_price desc;
+  
+  - 4.회원관리
+    --  정규직/비정규직 구분하여 출력
+    --  조건1. 정규직이면 A, 비정규직이면 B 출력
+    --  조건2.급여(1일 8시간, 한달 20일 기준으로 계산)
+    --  회원번호 회원명 정규/비정규여부 월급여
+    -----------------세로로 합치기-------------------------
+    --1)
+    (SELECT U.USER_SEQ, U.USER_NAME, 'A' AS "정규/비정규여부",FT.ASAL/12 AS 월급여
+    FROM USERS U, FULLTIME FT
+    WHERE U.USER_SEQ=FT.USER_SEQ) -->FULLTIME
+    UNION
+    (SELECT U.USER_SEQ, U.USER_NAME, 'B' AS "정규/비정규여부",PT.TSAL*8*20 AS 월급여
+    FROM USERS U, PARTTIME PT
+    WHERE U.USER_SEQ=PT.USER_SEQ); -->PARTTIME
+  
+  ​	-----------------가로로 합치기XXXXXXXXXXX--------------
+  ​	SELECT *
+  ​	FROM 
+  ​    	(SELECT U.USER_SEQ, U.USER_NAME, 'A' AS "정규/비정규여부",FT.ASAL/12 AS 월급여
+  ​    	FROM USERS U, FULLTIME FT
+  ​    	WHERE U.USER_SEQ=FT.USER_SEQ), -->FULLTIME
+  ​    	(SELECT U.USER_SEQ, U.USER_NAME, 'B' AS "정규/비정규여부",PT.TSAL*8*20 AS 월급여
+     	 FROM USERS U, PARTTIME PT
+  ​    	WHERE U.USER_SEQ=PT.USER_SEQ);
+  
+  ​	--2)
+  ​	SELECT DISTINCT U.USER_SEQ, U.USER_NAME
+  ​    	,(CASE WHEN  U.USER_SEQ = F.USER_SEQ THEN 'A' ELSE 'B' END) AS 여부
+     	 ,(CASE WHEN  U.USER_SEQ = F.USER_SEQ THEN F.ASAL ELSE P.TSAL*8*20 END) AS 월급여
+  ​	FROM USERS U, FULLTIME F, PARTTIME P
+  ​	WHERE U.USER_SEQ = F.USER_SEQ
+  ​	OR U.USER_SEQ = P.USER_SEQ;
+  ​    
+  
+  - 5.사용자별 구매 통계
+    --  회원아이디 총구매횟수 총구매금액
+    --  조건 : 구매 금액이 높은 순 출력
+    SELECT U.USER_ID, COUNT(O.ORDER_CODE) AS ORDER_CODE, SUM(O.TOT_PRICE) AS TOT_PRICE
+    FROM ORDERS O, USERS U
+    WHERE U.USER_SEQ=O.USER_SEQ
+    GROUP BY  U.USER_ID
+    ORDER BY TOT_PRICE DESC;
+  
+  - 6.휴면회원 통계
+    --  구매 실적이 전혀 없는 회원 목록 출력
+    --  회원아이디 회원명
+    --  LEE        이씨
+    SELECT USER_ID, USER_NAME
+    FROM USERS U, ORDERS O
+    WHERE U.USER_SEQ=O.USER_SEQ(+) AND O.USER_SEQ IS NULL;
+  
+  ​	select user_id, user_name from users where user_seq not in
+  ​    	(select distinct user_seq from orders group by user_seq);
+  ​    
+  
+  - 7.전체 회원 목록 중 휴면 회원이 차지하는 비율?
+    --  조건1. 관리자 제외
+    --  조건2. 휴먼회원은 구매 실적이 전혀 없는 회원
+    --  회원수 휴먼회원비율
+    --  2/5     40%
+        
+    select b.cnt||'/'||a.cnt as "회원수",(b.cnt/a.cnt) *100||'%'as "휴면회원비율"
+    from(select count(1) cnt from users where user_gubun ='u') a, -->총회원
+        (select count(1) cnt from users where user_seq not in -->휴면회원
+        (select u.user_seq from users u , orders o 
+        where u.user_seq=o.user_seq and u.user_gubun ='u'
+        group by u.user_seq)) b; 
+        
+    select u.user_seq  
+    from users u , orders o
+    where u.user_seq=o.user_seq -->구매실적 있는 회원
+  
+    and u.user_gubun !='a' ; -->매니저 제외
+  
+  ​	select (HCNT||'/'||UCNT)    as 회원수, 
+  ​      	 (HCNT/UCNT*100||'%') as 휴면회원비율
+  ​	from 
+  ​    	(select count(user_seq) AS hcnt
+  ​    	 from users
+  ​     	where user_seq not in (select distinct user_seq from orders)
+  ​          	AND USER_GUBUN='u'
+     	 ) , 
+  ​     	(select count(user_seq) AS ucnt 
+  ​     	 from users
+  ​      	WHERE USER_GUBUN='u');
+  
+  - 8.각 회원별로 매니저-회원 관계를 출력하시오
+    --  조건1. 관리자 제외
+    --  조건2. 매니저 번호 오름차순 회원번호 오름차순 정렬
+    --  매니저       회원
+    --  LEE         KIM
+    --  LEE         PARK
+    --  PARK        HONG
+  
+  SELECT M.USER_ID AS 매니저, U.USER_ID AS 회원
+  FROM USERS U, USERS M
+  WHERE M.USER_SEQ=U.MGR_SEQ  
+          AND U.USER_GUBUN ='u'
+  ORDER BY M.USER_SEQ ASC, U.MGR_SEQ ASC;
+  
+  - 9.주문/상품/업체 대시보드 현황판
+    --  총주문수량   총주문금액   총회원수    총업체수    총상품수
+    --  58          1025000     5           7           12
+    --  AMT     PRICE       UCNT        CCNT        GCNT
+    --  48      244000      5           7           10
+    SELECT SUM(OG.ORDER_AMOUNT) as AMT, SUM(O.TOT_PRICE) as PRICE, 
+           COUNT(U.USER_SEQ) as UCNT, COUNT(CG.COM_SEQ) as CCNT, COUNT(CG.GOOD_SEQ) as GCNT
+  
+    FROM ORDERS O, USERS U, COMPANY_GOODS CG, ORDERS_GOODS OG;
+  
+  ​	select (select sum(order_amount) from orders_goods) as AMT,
+  ​      	 (select sum(order_price) from orders_goods) as PRICE,
+  ​      	 (select count(com_seq) from company) as UCNT,
+  ​      	 (select count(user_seq) from users) as CCNT,
+  ​       	(select count(good_seq) from goods) as GCNT
+  ​	from dual;
+  
+  - 10.월별 판매실적
+    --  1월      2월      3월      4월
+    --  20000   12000   50000
+    SELECT SUM(TOT_PRICE),EXTRACT(MONTH FROM ORDER_DATE) AS MONTH
+    FROM ORDERS
+    GROUP BY EXTRACT(MONTH FROM ORDER_DATE);
+    --1)
+    SELECT
+        (SELECT SUM(TOT_PRICE)FROM ORDERS WHERE EXTRACT(MONTH FROM ORDER_DATE)=1) AS "1월",
+        (SELECT SUM(TOT_PRICE)FROM ORDERS WHERE EXTRACT(MONTH FROM ORDER_DATE)=2) AS "2월",
+        (SELECT SUM(TOT_PRICE)FROM ORDERS WHERE EXTRACT(MONTH FROM ORDER_DATE)=3) AS "3월",
+        (SELECT SUM(TOT_PRICE)FROM ORDERS WHERE EXTRACT(MONTH FROM ORDER_DATE)=4) AS "4월",
+        (SELECT SUM(TOT_PRICE)FROM ORDERS WHERE EXTRACT(MONTH FROM ORDER_DATE)=5) AS "5월",
+        (SELECT SUM(TOT_PRICE)FROM ORDERS WHERE EXTRACT(MONTH FROM ORDER_DATE)=6) AS "6월",
+        (SELECT SUM(TOT_PRICE)FROM ORDERS WHERE EXTRACT(MONTH FROM ORDER_DATE)=7) AS "7월"
+    FROM DUAL ;
+  
+  ​	--2)
+  ​	--------------세로출력 PIVOT화--------------------------
+  ​	SELECT
+  ​    	SUM(DECODE(SUBSTR(ORDER_DATE,6,2), '01', TOT_PRICE,0)) AS "1월",
+  ​    	SUM(DECODE(SUBSTR(ORDER_DATE,6,2), '02', TOT_PRICE,0))AS "2월",
+  ​    	SUM(DECODE(SUBSTR(ORDER_DATE,6,2), '03', TOT_PRICE,0)) AS "3월"
+  ​	FROM ORDERS
+  ​	ORDER BY ORDER_DATE;
+  
+  ​	---------------세로형---------------------------------
+  ​	SELECT SUBSTR(ORDER_DATE,6,2) AS MMM,SUM(TOT_PRICE)
+  ​	FROM ORDERS
+  ​	GROUP BY SUBSTR(ORDER_DATE,6,2) 
+  ​	ORDER BY MMM;
+  
+  - 캘린더 OUTER JOIN 예제
+  
+  ​	create table ca_dummy(month number(3));
+  ​	insert into ca_dummy values(1);
+  ​	insert into ca_dummy values(2);
+  ​	insert into ca_dummy values(7);
+  ​	select * from ca_dummy ;
+  ​	commit;
+  
+  ​	select *
+  ​	from 
+     	( select  extract(month from order_date) as mmm
+  ​    	  from orders) t1,
+  ​    	(select month from ca_dummy) t2
+  ​	where t1.mmm(+) = t2.month
+  ​	group by mmm, month
+  ​	order by mmm;
+  
+  
+  
+  
+  
+  
+  ```
+
+- 

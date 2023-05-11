@@ -1,0 +1,62 @@
+★( target )   : SalePrice
+
+YearBuilt(완공연도)-GarageYrBlit(차고 완공 연도)           (0.83) 
+
+GrLivArea(지상층 생활 면적)-TotRmsAbvGrd(지상 위의 총 객실 수(욕실 제외)) (0.83)
+
+===========target과의 관계==================================
+OverallQual(전반적 재료와 마감 품질)-★SalePrice           (0.79)
+
+GrLivArea(지상층 생활 면적)-★SalePrice                       (0.71)
+=======================================================
+
+*Qual : 품질
+*Cond: 상태
+
+
+'OverallQual', (0.79)
+'OverallCond',(-0.08)
+'KitchenQual',
+'HeatingQC',
+'FireplaceQu',  *  --> nan = no Fireplace
+'ExterQual',
+'ExterCond',
+'BsmtQual',  *    --> nan = No Basement
+'BsmtCond', *    --> nan = No Basement
+'GarageQual', *  --> nan = no Garage
+'GarageCond', * --> nan = no Garage
+'PoolQC'*         --> nan = no Pool
+
+
+<파생피쳐>
+train['opt']=train['Fireplace_y_n']+train['Bsmt_y_n']+train['Garage_y_n']+train['Pool_y_n']
+
+<다중공선>
+
+train['Fireplace_y_n']   : Fireplaces(0.9)  , FireplaceQu(0.95)
+train['Garage_y_n']     : GarageQual(0.94)   , GarageCond(0.95)
+train['Pool_y_n']        :  PoolArea(0.99)  ,  PoolQC(0.95)
+train['Bsmt_y_n']       :  BsmtCond(0.86)
+
+=======================================================
+
+<1차선택>
+
+'MSSubClass', 'MSZoning', 'LotFrontage', 'LotArea', 'Street',
+       'LotShape', 'LandContour', 'Utilities', 'LotConfig', 'LandSlope',
+       'Neighborhood', 'Condition1', 'Condition2', 'BldgType', 'HouseStyle',
+       'OverallQual',  'YearBuilt', 'YearRemodAdd', 'RoofStyle',
+       'RoofMatl', 'Exterior1st', 'Exterior2nd', 'MasVnrType', 'MasVnrArea',
+       'ExterQual', 'ExterCond', 'Foundation', 'BsmtQual',
+       'BsmtExposure', 'BsmtFinType1', 'BsmtFinSF1', 'BsmtFinType2',
+       'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF', 'Heating', 'HeatingQC',
+       'CentralAir', 'Electrical', '1stFlrSF', '2ndFlrSF', 'LowQualFinSF',
+       'GrLivArea', 'BsmtFullBath', 'BsmtHalfBath', 'FullBath', 'HalfBath',
+       'BedroomAbvGr', 'KitchenAbvGr', 'KitchenQual', 'TotRmsAbvGrd',
+       'Functional',  'GarageType', 'GarageYrBlt',
+       'GarageFinish', 'GarageCars', 'GarageArea',
+       'PavedDrive', 'WoodDeckSF', 'OpenPorchSF', 'EnclosedPorch', '3SsnPorch',
+       'ScreenPorch', 'Fence', 'MiscFeature', 'MiscVal',
+       'MoSold', 'YrSold', 'SaleType', 'SaleCondition', 'SalePrice',
+       'Fireplace_y_n', 'Bsmt_y_n', 'Garage_y_n', 'Pool_y_n', 'opt'
+

@@ -1,0 +1,342 @@
+```sql
+1.EMP 급여SAL 2000 3000
+SELECT * FROM EMP
+WHERE SAL BETWEEN 2000 AND 3000;
+
+2.COMM SAL COMM없어도 결과
+SELECT NVL(COMM,0)+SAL FROM EMP;
+
+3.EMPNO 1000 OR 2000 OR 3000 사원 출력
+SELECT * FROM EMP
+WHERE EMPNO=1000 OR EMPNO=2000 OR EMPNO=3000;
+WHERE EMPNO IN(1000,2000,3000);
+
+4.사원명 A 로 시작
+SELECT * FROM EMP
+WHERE ENAME LIKE 'A%';
+WHERE SUBSTR(ENAME,1,1)='A';
+WHERE ENAME >=A AND ENAME <B;
+
+5. DEPTNO 10부서의 부서번호 NULL
+   UPDATE EMP SET DEPTNO = NULL
+
+   WHERE DEPTNO =10;
+   ======================================================================================================
+
+   <LESSEON 2>
+   --정렬
+   --ORDER BY 컬럼명  __ASC__, 컬럼명2   __DESC___
+   --ASC(오름차순) DESC(내림차순)  -->기본은 오름차순
+   --모든 SQL문의 마지막에 붙힘 
+   --SELECT문에만 존재 -->출력 결과를 정렬하기 때문
+
+SELECT * FROM EMP
+WHERE JOB IN ('CLERK','MANAGER')
+ORDER BY DEPTNO ASC, SAL DESC;  -->값이 동일할 경우 입력된 순서대로
+
+SELECT ROWNUM,ROWID, SAL, ENAME FROM EMP;  
+-->ROWNUM : INSERT 된 순서를 보여줌
+-->ROWID  : 블럭 순서를 보여줌
+
+SELECT SAL, SAL*12 AS ASAL FROM EMP
+WHERE SAL*12 > 20000-->FROM 절에 있는 원본을 사용해야함
+--WHERE SAL > (20000/12)-->원본에 변형이가면 인덱스를 타지 않기 때문에 형태 변경
+--WHERE ASAL > 20000 -->별명 사용 불가 : 에러, WHERE조건은 EMP 원본에는 ASAL 존재하지 않음
+ORDER BY ASAL;       -->별명 사용 가능(추천)
+
+SELECT SAL, SAL*12 AS ASAL FROM EMP
+
+ORDER BY SAL*12; -->별명이 아닌 원래의 문법으로도 사용 가능, 연산이 두번이루어지기 때문에 비추천
+
+```
+
+
+
+## LESSON 4
+
+- JOIN
+  --최소 한개 이상의 테이블 사용(자기 자신의 테이블을 넣어도 가능)
+  --양쪽 테이블에 동일한 이름의 컬럼이 존재하는 경우 어디서 가져올지 반드시 함께 적어주어야 함
+  --한쪽 테이블에만 있는 컬럼일 경우 테이블명을 적지 않아도 됨
+  --두개의 테이블의 값을 연결하는 것, 컬럼 이름과 무관
+
+  ```sql
+  - EQUIJOIN : = 조건 사용 시 -->모호한 컬럼 이름 사용 불가('테이블명.칼럼명' 사용),AS 사용
+  
+  - NON-EQUIJOIN : = 조건 외 조건을 사용 시 EX. <,>,<=,>= ...
+    SELECT E.EMPNO, E.ENAME, E.SAL, S.GRADE, S.LOSAL, S.HISAL
+    FROM EMP E, SALGRADE S
+    WHERE E.SAL BETWEEN S.LOSAL AND S.HISAL
+    ORDER BY GRADE ASC , SAL ASC;
+  
+  - SELFJOIN : 본인이 본인을 조회할 때  EX. E1.MGR=E2.EMPNO
+    --사원번호, 사원명, 매니저 번호, 매니저명 출력
+    SELECT E1.EMPNO, E1.ENAME, E1.MGR AS MGRNO, E2.ENAME AS MGRNAME  -->E1.MAR 대신 E2.EMPNO 도 가능
+    FROM EMP E1, EMP E2
+    WHERE E1.MGR=E2.EMPNO(+);  -->매니저 없는 사장도 출력
+  
+  - OUTERJOIN : 한쪽 테이블에 값이 없더라도 출력되게 하는 것, 값이 없는 쪽에 (+) 표시
+    --해당 부서에 사원이 없어도 사원정보 출력
+    --부서번호, 부서명, 사원번호, 사원명 출력
+    SELECT D.DEPTNO, D.DNAME, E.EMPNO, E.ENAME
+    FROM EMP E, DEPT D
+    WHERE E.DEPTNO(+)=D.DEPTNO 
+    ORDER BY D.DEPTNO;
+  
+  - CARTESIAN PRODUCT
+    --EMP:14건 DEPT: 4건 --> 총56건
+    SELECT EMP.EMPNO, DEPT.LOC
+    FROM EMP, DEPT;
+  ```
+
+- JOIN시 조건절 사용
+
+  ```sql
+  SELECT EMP.EMPNO, DEPT.LOC
+  FROM EMP, DEPT
+  WHERE EMP.DEPTNO=DEPT.DEPTNO;
+  ```
+
+- JOIN시 테이블에 별명을 붙여서 많이 사용함
+
+  ```sql
+  - SELECT E.EMPNO, D.LOC
+    FROM EMP E, DEPT D
+    WHERE E.DEPTNO=D.DEPTNO;
+    
+  --사원번호, 사원명, 부서번호, 부서명 출력  
+  SELECT E.EMPNO,E.ENAME, D.DEPTNO, D.DNAME
+  FROM EMP E, DEPT D
+  WHERE E.DEPTNO=D.DEPTNO;
+  
+  사원번호, 사원명, 부서번호, 부서명 출력
+  --10번 부서만 출력
+  SELECT E.EMPNO, E.ENAME,D.DEPTNO, D.DNAME
+  FROM EMP E, DEPT D
+  WHERE E.DEPTNO=D.DEPTNO AND D.DEPTNO=10; -->JOIN을 실행하여 14건 중에 10번을 찾음
+  --WHERE D.DEPTNO=10 AND E.DEPTNO=D.DEPTNO ; -->비효율적, 메모리 용량 문제, 속도 느림, 56건중에 10번을 찾음
+  ```
+
+## GROUP BY 
+
+- 5가지 MAX(SAL), MIN(SAL), SUM() AVG(), 
+  --                COUNT(SAL), COUNT(1), COUNT(*)
+- GROUP BY 컬럼
+  --GROUP 조건: HAVING 컬럼=값
+  --★★★ WHERE 절에는 그룹함수 사용 불가 --> HAVING 절에 사용 ★★★
+  --★★★ GROUP BY에 사용한 컬럼만 SELECT에 올 수 있다 ★★★
+
+- SELECT FROM [WHERE]
+  --GROUP BY ~ [HAVING]
+
+ORDER BY ~
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+```sql
+- SELECT COUNT(COMM), COUNT(1), COUNT(*)
+  FROM EMP;
+  --COUNT(컬럼) : 결측(NULL) 무시 -->셀에 값이 있는 것만 셈, NULL값은 건너띔(NULL은 없는 값 취급)
+
+- 평균에서 0 데이터값도 취급해야 하는가?
+  SELECT AVG(COMM) AS AVGC, COUNT(COMM) AS COUNTC, SUM(COMM) AS SUMC
+      ,(SUM(COMM)/3) AS CCC  -->COMM이 0인 사람은 세면 안되기 때문에 3을 입력, 0처리 주의!!
+                             -->AVG 그룹함수와 결과가 달라짐
+  FROM EMP;
+
+SELECT ROWID, E.*
+FROM EMP E;
+--COUNT(1) : 고유ID의 갯수를 셈
+--COUNT(*) : 모든 컬럼를 대상으로 갯수를 셈-->되도록 쓰지 않는 것이 좋음, 메모리 및 성능에 비효율적, 정보 노출의 위험
+--*는 지양하기, SELECT도 마찬가지
+
+SELECT MAX(SAL), MIN(SAL), SUM(SAL), AVG(SAL), COUNT(SAL)
+FROM EMP;
+
+--부서별로 최대급여, 최소급여 출력
+SELECT DEPTNO, MAX(SAL) AS MAX, MIN(SAL) AS MIN
+FROM EMP
+GROUP BY DEPTNO;
+
+--부서별, 직업별 최대급여, 최소급여
+SELECT DEPTNO,JOB 
+    ,MAX(SAL) AS MAX, MIN(SAL) AS MIN
+FROM EMP
+GROUP BY DEPTNO, JOB
+ORDER BY DEPTNO,JOB;
+
+--★★★ GROUP BY에 사용한 컬럼만 SELECT에 올 수 있다 ★★★
+SELECT DEPTNO,JOB -->ORA-00979: not a GROUP BY expression
+    ,MAX(SAL) AS MAX, MIN(SAL) AS MIN
+FROM EMP
+GROUP BY DEPTNO  -->에러가 없으려면,JOB도 기입
+ORDER BY DEPTNO,JOB;
+
+SELECT DEPTNO,COUNT(DEPTNO) -->ORA-00937: not a single-group group function
+FROM EMP;    
+
+--그룹함수 중첩
+--ROUND(실수,소수점 몇자리 까지 보여줄까)
+SELECT ROUND(MAX(AVG(SAL)),0),MAX(AVG(SAL)) FROM EMP  
+GROUP BY DEPTNO;
+
+--10 부서가 아닌 부서
+--부서별로 최대급여, 최소급여 출력
+SELECT DEPTNO, MAX(SAL) AS MAX, MIN(SAL) AS MIN
+FROM EMP
+WHERE DEPTNO <>10 -->추천
+GROUP BY DEPTNO ;
+--HAVING DEPTNO <>10; -->비효율적
+
+--최대급여가 3000이상인 부서만 출력
+--부서별로 최대급여, 최소급여 출력
+SELECT DEPTNO, MAX(SAL) AS MAX, MIN(SAL) AS MIN
+FROM EMP
+--WHERE MAX(SAL) >=3000  --★★★ 그룹함수는 WHERE절에서 사용할 수 없다.
+GROUP BY DEPTNO 
+HAVING MAX(SAL) >= 3000;
+
+--NVL 결측 처리 후 집계
+SELECT AVG(NVL(COMM,0)) AS AVGC, COUNT(NVL(COMM,0)) AS COUNTC
+FROM EMP;
+```
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+## 실습
+
+```sql
+--1. 급여가 2000 이상이면서 부서가 10번에 해당하는 사람의 이름과 연봉 부서를 출력하시오
+SELECT ENAME, SAL, DEPTNO
+FROM EMP
+WHERE SAL >=2000 AND DEPTNO=10;
+
+--2. 커미션이 500 이상이면서 입사일이 1981년 입사자인인 사원의 사원번호, 사원명, 입사일, 커미션을 출력하시오
+SELECT EMPNO,ENAME, HIREDATE,COMM
+FROM EMP
+WHERE NVL(COMM,0)>=500 AND HIREDATE BETWEEN TO_DATE('1981-01-01','YYYY-MM-DD') AND  TO_DATE('1981-12-31','YYYY-MM-DD');
+
+--3. 총 수입이 30,000 미만이고, 부서번호가 10번, 직업이 CLERK이 아닌 사원의 사원명, 전체연봉, 직업, 급여를 출력하시오.
+--단, 총 수입이 많은 것부터 작은순으로 출력하시오. 
+--(총 수입: 급여에 12를 곱한 후 커미션을 더해서 계산하시오.)
+SELECT ENAME,(SAL*12)+NVL(COMM,0) AS TOTAL_SAL, JOB, SAL
+FROM EMP
+WHERE SAL*12 <30000 AND DEPTNO=10 AND JOB!='CLERK'
+ORDER BY TOTAL_SAL DESC;
+
+--4. SCOTT이라는 사람의 급여, 연봉, 커미션을 출력하시오.
+SELECT SAL, SAL*12 AS ASAL ,COMM
+FROM EMP
+WHERE ENAME='SCOTT';
+
+--5. 커미션을 받지 못하는 사원의 사원번호, 사원명, 커미션을 출력하시오.
+SELECT EMPNO, ENAME, COMM
+FROM EMP
+WHERE NVL(COMM,0)=0;     -->결측과 0을 한번에 비교할 때 사용하는 문법
+--WHERE COMM IS NULL OR COMM<=0;
+
+--6.1000 미만의 급여를 받는 사원수를 출력하시오.
+SELECT COUNT(1)
+FROM EMP
+WHERE SAL<1000;
+
+--7. 급여가 2000을 넘는 사원의 이름과 급여를 급여가 많은 것부터 작은순으로 출력하시오.
+SELECT ENAME, SAL
+FROM EMP
+WHERE SAL>2000
+ORDER BY SAL DESC;
+
+--8. 사원의 급여가 2000에서 3000 사이에 포힘되고 부서번호가 20또는 30인 사원의 이름, 급여와
+--   부서번호를 출력하되 이름 순(오름차순)으로 출력하시오.
+SELECT ENAME, SAL, DEPTNO
+FROM EMP
+WHERE SAL BETWEEN 2000 AND 3000 AND DEPTNO IN(20,30)
+ORDER BY ENAME;
+
+--9. 1981년 2월20일부터 1981년 5월1일 사이에 입사한 사원의 이름, 담당업무, 입사일을 출력하시오.
+SELECT ENAME, JOB, HIREDATE
+FROM EMP
+WHERE HIREDATE BETWEEN TO_DATE('1981-02-20','YYYY-MM-DD') AND TO_DATE('1981-05-01','YYYY-MM-DD');
+
+--10. 이름에 A와 E를 모두 포함하고 있는 사원의 이름을 출력하시오.
+SELECT ENAME
+FROM EMP
+WHERE ENAME LIKE '%A%' AND ENAME LIKE '%E%';
+
+--12. 직업별로 최대급여, 최소급여, 평균급여를 출력하시오
+--    평균에 대해서는 정수로 반올림 하시오.
+SELECT JOB,MAX(SAL) AS MAX, MIN(SAL) AS MIN, ROUND(AVG(SAL),0) AS AVG
+FROM EMP
+GROUP BY JOB;
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--1. EMP 테이블에서 부서 인원이 4명보다 많은 부서의 부서번호, 인원수, 급여의 합을 출력하시오.
+SELECT DEPTNO, COUNT(DEPTNO), SUM(SAL) AS TSAL
+FROM EMP
+GROUP BY DEPTNO
+HAVING COUNT(DEPTNO) >4;
+
+--8. 각 사원 별 커미션(COMM)이 0 또는 NULL이고 부서위치가 ‘GO’로 끝나는 사원의 정보를 사원번호, 사원이름, 커미션, 부서번호, 부서명, 부서위치를 출력하여라. 
+--조건1. 커미션(COMM)이 NULL이면 0으로 출력
+SELECT E.EMPNO, E.ENAME, NVL(E.COMM,0) AS COMM, D.DEPTNO, D.DNAME, D.LOC
+FROM EMP E, DEPT D
+WHERE E.DEPTNO=D.DEPTNO
+    AND NVL(E.COMM,0)=0 AND D.LOC LIKE '%GO';
+
+--13. 1981년 6월 1일 ~ 1981년 12월 31일 입사자 중 부서명(DNAME)이 SALES인 사원의 부서번호, 사원명, 직업, 입사일을 출력하시오.
+--조건1. 입사일 오름차순 정렬
+SELECT E.DEPTNO, E.ENAME, E.JOB, E.HIREDATE
+FROM EMP E ,DEPT D
+WHERE E.DEPTNO=D.DEPTNO AND
+    E.HIREDATE BETWEEN '1981-06-01' AND '1981-12-31' AND D.DNAME='SALES'
+ORDER BY E.HIREDATE;
+
+--14. 현재 시간과 현재 시간으로부터 한 시간 후의 시간을 출력하시오.
+--조건1. 현재시간 포맷은 
+--       ‘4자리년-2자일월-2자리일24시:2자리분:2자리초’ 
+--조건2. 한시간후 포맷은
+--       ‘4자리년-2자일월-2자리일24시:2자리분:2자리초’
+SELECT TO_DATE(SYSDATE,'YYYY-MM-DD HH24:MI:SS') AS NOW 
+    ,TO_DATE(SYSDATE+(1/24),'YYYY-MM-DD HH24:MI:SS') AS AFTER_1H
+FROM DUAL;  -->컬럼 값 1개만 가지고 있음, 오라클에서 제공되는 임시 테이블
+
+--15. 각 부서별 사원수를 출력하시오.
+--조건1. 부서별 사원수가 없더라도 부서번호,
+--          부서명은 출력
+--조건2. 부서별 사원수가 0인 경우 ‘없음’ 출력    -->추후 DECODE
+--조건3. 부서번호 오름차순 정렬
+SELECT D.DEPTNO,D.DNAME,COUNT(E.EMPNO)
+FROM EMP E, DEPT D
+WHERE E.DEPTNO(+)=D.DEPTNO
+GROUP BY D.DEPTNO,D.DNAME
+ORDER BY D.DEPTNO;
+
+--16.사원 테이블에서 각 사원의 사원번호, 사원명, 매니저번호, 매니저명을 출력하시오.
+--조건1. 각 사원의 급여(SAL)는 매니저 급여보다 많거나 같다.
+SELECT E.EMPNO, E.ENAME, E.MGR AS MGRNO, M.ENAME AS MGRNAME
+FROM EMP E, EMP M
+WHERE E.MGR=M.EMPNO AND E.SAL >=M.SAL;
+
+--20. 입사일로부터 지금까지 근무년수가 42년 이상인 사원의 사원번호, 사원명, 입사일, 근무년수를 출력하시오.
+--조건1. 근무년수는 월을 기준으로 버림
+--(예:30.4년 = 30년, 30.7년=30년)
+SELECT EMPNO,ENAME, HIREDATE,SYSDATE,TRUNC((SYSDATE-HIREDATE)/365,0) AS WORK
+FROM EMP
+WHERE TRUNC((SYSDATE-HIREDATE)/365)>=42;
+
+--Q. 문제 각 부서의 직업별로 속해 있는 사원수를 출력하시오.
+--조건1. 직업에는 반드시 매니저(mng)가 있다.
+--조건2. 직업별 사원수는 최소 2명 이상인 직업을 대상으로 한다.
+--조건3. 직업별 사원은 1981년3월이후 입사자를 대상으로 한다.
+SELECT DEPTNO, JOB, COUNT(EMPNO) 
+FROM EMP 
+WHERE HIREDATE >='1981-03-31' AND MGR IS NOT NULL
+GROUP BY DEPTNO, JOB
+HAVING COUNT(EMPNO)>=2;
+
+
+```
+
+
+

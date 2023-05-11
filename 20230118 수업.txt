@@ -1,0 +1,296 @@
+```sql
+USERNM 홍길동인 사람의 정보 출력
+
+SELECT * FROM MEMBERS
+WHERE USERNM="홍길동";
+
+USERID, USERPW
+USERID KIM
+USERPW 111
+
+INSERT INTO MEMBERS
+VALUES("KIM",111);
+
+비밀번호333변경
+
+UPDATE MEMBERS
+SET USERPW=333
+WHERE USERID="KIM";
+
+DELETE FROM MEMBERS
+
+WHERE USERID="KIM";
+
+```
+
+
+
+## 무결성 제약조건
+
+- 1.기본 개념
+  -무결성이 깨진다: 테이블에 부적절한 자료가 입력됨
+  -행=튜플=레코드
+  -열=애트리뷰트=컬럼
+  -도메인 :  한 애트리뷰트에 나타날 수 있는 값들의 집합
+  -디그리(dgree) = 열의 수, 최소 차수는 1
+  -카디널리티(cardinarlity) =행의 수, 카디널리티는 0일 수 있음
+  -기본키(pk) : 유니크함, not null, 고유한 정보
+  -외래키(fk) :  다른테이블의 pk를 가져와 해당 테이블에서 사용함
+
+- 2.널값(null value)
+  -'알려지지 않음','적용할 수 없음' -->어떠한 연산을 해도 null,연산 불가(null이 하나라도 포함되면 연산 불가)
+  -숫자 도메인의 0이나 문자열 도메인의 공백과 다름
+
+- 3.릴레이션 스키마(뼈대, 구조)
+  -프로그램의 프로퍼티(property)
+  -desc 테이블명
+  -릴레이션의 애트리뷰트(열)의 집합 -->튜플을 알 수 없음(데이터 알 수 없음)
+  -릴레이션이름만 보임
+  -기본키에는 밑줄
+  -내포(intension)
+
+- 4.릴레이션 인스턴스
+  -어느 시점에 들어있는 튜플(행)들의 집합
+  -외연(extension) -->시간에 따라 변함
+
+- 5.릴레이션
+  -튜플(행)들의 집합
+  -특성
+  	-각 릴레이션은 오직 하나의 레코드 타입만 포함 ex. 문자, 숫자 -->한 애트리뷰트 내의 값들은 모두 같은 유형
+  	-애트리뷰트들의 순서 중요하지 않음
+  	-동일한 튜플은 두 개 이상 존재 할 수 있음
+
+- 6.릴레이션 키
+  -각 튜플을 고유하게 식별
+  -기본키<대체키<후보키<슈퍼키
+  -테이블을 나눠서 관리하는 이유
+    -디스크 낭비 방지
+    -무결성이 깨지지 않게 하기 위해
+    -대량 레코드 수정을 용이하게 하기 위해->한군데만 수정하면 그와 연결된 모든 데이터 수정 가능
+  -외래키: 
+  	-다른 테이블의 pk를 참조
+  	-하나의 테이블에는 여러개의 fk가 올 수 있음
+  	-참조 시 컬럼의 이름은 동일하지 않아도 됨(값을 참조o, 이름 참조x)
+  -복합pk : 관련된 여러개의 컬럼을 묶어 기본키로 사용
+  *하나의 테이블에 pk가 없을 수 도 있지만 이는 잘못된 설계임 -->pk가 없으면 해당 정보를 찾아내는 것이 어려움
+  *pk를 찾을 수 없는 경우, 노출 되어서는 안되는 정보일 경우, 일련번호(시퀀스)를 부여하여 pk로 사용
+  *pk가 아니어도 참조 가능, 단 fk는 아님 -->pk는 반드시 uniqe, 참조 무결성이 깨질 수있음
+
+- 7.데이터 무결성(data integrity)
+  -데이터 정확성, 유효성
+  -일관된 데이터베이스 상태 정의하는 규칙들
+  -무결성 제약 조건
+    -기본키 제약조건 : not null(결측), unique
+    -외래키와 참조 무결성 제약조건 : 기본키의 값들에 있는 값들만 사용해야함
+
+  -참조 테이블의 튜플 먼저 삭제 후 원본 테이블의 튜플 삭제 가능     
+
+​	-오라클 색인(인덱스)=bytree(비트리) -->검색 속도 빠름(1초 이내)
+​	-pk에 자동으로 인덱스가 만들어지는 이유 : pk,fk가 join되었을 때 연결된 정보를 빠르게 찾아야 함	-빈번한 수정,삭제가 있는경우 인덱스 사용하지 않는 것이 좋음 -->검색 느려짐
+
+
+
+## LESSON 1
+
+```sql
+--주석 :컴퓨터 실행 x
+
+--전체 사원 정보 조회
+select * from emp;
+
+--사원번호, 직업, 급여 출력
+select empno, job, sal form emp;
+
+--사원번호, 직업, 급여+300 출력
+select empno, job, sal, sal+300 as upsal form emp;
+
+--ALIAS (별명)
+--컬럼명(AS, 생략) : SAL+300 AS UPSAL 또는 SAL+300 UPSAL
+--테이블명( , 생략) : FROM EMP E
+--오라클에서는 AS 안붙혀도 됨, 다른 DB에서는 사용해야함
+SELECT *         FROM EMP E;
+SELECT EMP.ENAME FROM EMP E; --실행가능하나 번거로움, 잘 사용하지 않음
+SELECT ENAME     FROM EMP E;
+SELECT E.ENAME   FROM EMP E;
+SELECT E.ENAME   FROM EMP AS E; --에러: 테이블명 별명에는 AS 사용 불가
+
+SELECT E.ENAME NM     FROM EMP E; --컬럼명은 AS 안붙여도 실행가능
+SELECT E.ENAME AS NM  FROM EMP E; --컬럼명은 AS 붙여도 실행가능
+
+--글자합치기 ||
+SELECT SAL + COMM FROM EMP; --숫자는 덧셈(+)
+SELECT ENAME + JOB FROM EMP; --글자는 덧셈 불가
+SELECT ENAME || JOB FROM EMP; --글자는 합치기
+SELECT ENAME ||'-'||JOB FROM EMP;
+
+SELECT CONCAT(ENAME,JOB) AS EJ FROM EMP; 
+--CONCAT(첫번째 단어, 두번째 단어) : 두개의 단어 합치기 함수
+--오라클에만 사용 가능
+SELECT CONCAT(CONCAT(ENAME,'-'),JOB) AS EJ FROM EMP; --불편하기 때문에 보통 || 사용
+
+--고유한 도메인(해당 컬럼의 값들) 값 출력
+--DISTINCT 컬럼
+--GROUP BY 컬럼
+SELECT DISTINCT JOB FROM EMP;
+SELECT JOB FROM EMP GROUP BY JOB;
+
+--커미션을 300받는 사원 출력
+SELECT * FROM EMP
+WHERE COMM=300; --컬럼이름=값
+--300이 아니다 : 
+--WHERE COMM != 300 --다른 프로그램에서 사용
+--WHERE COMM <> 300 --오라클에서 사용
+
+
+--커미션을 받지 않는 사원 출력
+SELECT * FROM EMP
+WHERE COMM IS NULL; --IS NULL/ IS NOT NULL
+--NULL은 어떠한 조건에도 걸리지 않음, 데이터 취급을 받지 못함
+
+--사원명, 커미션+100 출력
+SELECT ENAME, COMM, COMM+100 AS UPCOMM 
+FROM EMP;
+
+--COMM과 급여 합산 출력
+SELECT COMM,SAL, COMM+SAL AS CS FROM EMP;
+
+SELECT COMM, NVL(COMM, 0) UCOMM FROM EMP;
+--단어에 ()붙어있는 경우 함수
+--NVL(컬럼명, NULL인 경우에 들어갈 값)
+
+SELECT COMM,SAL, NVL(COMM,0)+SAL AS CS FROM EMP;
+--언제든 NULL 값이 들어올 수 있기 때문에 항상 NVL()처리 반드시 하기
+--기본적으로 DB에서 NULL을 0으로 처리해줌
+
+--SMITH의 직업을 NULL로 변경
+SELECT * FROM EMP;
+
+UPDATE EMP
+SET JOB = NULL --JOB IS NULL(X),UPDATE SET할때만 예외로 JOB=NULL 가능
+WHERE ENAME = 'SMITH'; --값은 대소문자 구분함
+--WHERE 조건에서는 무조건 IS NULL
+--원복
+UPDATE EMP
+SET JOB='CLERK'
+WHERE ENAME = 'SMITH';
+
+-----------------------------------------------------------------------------
+
+--NULL값이 들어오는 경우
+--1)INSERT INTO ....VALUES('' 또는 NULL)
+
+--2)INSERT INTO 테이블명(컬럼명) VALUES(값) : 배제되는 컬럼값들은 모두 NULL값으로 들어옴
+-----------------------------------------------------------------------------
+
+DROP TABLE TEST33;
+
+CREATE TABLE TEST33(ENAME VARCHAR2(10),SAL NUMBER(5));
+SELECT * FROM TEST33;
+INSERT INTO TEST33 VALUES(NULL,100);
+INSERT INTO TEST33 VALUES('',100);
+INSERT INTO TEST33(ENAME, SAL) VALUES('',NULL); --ENAME,SAL에 NULL 부여
+INSERT INTO TEST33(SAL) VALUES(500); --ENAME에는 NULL
+
+UPDATE TEST33 
+SET ENAME = 'SMITH'
+WHERE SAL=500;
+
+--이름이 없는 사람은 '무명'이라고 출력
+SELECT NVL(ENAME,'무명') AS UNAME FROM TEST33;
+
+
+```
+
+
+
+## LESSON 2
+
+```sql
+--10번 부서 사원 출력
+SELECT * FROM EMP
+WHERE DEPTNO = 10;
+
+--JOB이 CLERK인 사원의 사원번호, 사원명, 직업 출력
+SELECT EMPNO, ENAME, JOB FROM EMP
+WHERE JOB = 'CLERK';
+
+--SAL 이 3000 이하를 받는 사원 출력
+SELECT * FROM EMP
+WHERE SAL <= 3000;
+
+--SAL 이 3000 이상 5000이하를 받는 사원 출력
+SELECT * FROM EMP
+--WHERE SAL >= 3000 AND SAL <=5000; --컬럼<값 AND/OR 컬럼<값
+WHRER SAL BETWEEN 3000 AND 5000; --칼럼명 BETWEEN A AND B
+
+--B~-C사원명 출력
+SELECT * FROM EMP
+WHERE ENAME >= 'B' ENAME < 'D'; 
+--C까지로 설정하는경우 C는 포함 안되기 때문에 D로 설정
+--알파벳도 부등호 사용가능
+
+--입사일이 1981년도 입사자 출력
+SELECT HIREDATE FROM EMP;
+
+SELECT * FROM EMP
+WHERE HIREDATE BETWEEN TO_DATE('1981-01-01','YYYY-MM-DD') AND TO_DATE('1981-12-31','YYYY-MM-DD');
+WHERE HIREDATE BETWEEN '1981-01-01' AND '1981-12-31';
+
+--매칭되는 값 찾기 IN(값, 값,.....)
+--직업이 CLERK 이거나 MANAGER 인 사원 출력
+SELECT * FROM EMP
+WHERE JOB = 'CLERK' OR JOB = 'MANAGER'; --IN 사용 X
+
+SELECT * FROM EMP
+WHERE JOB IN('CLERK','MANAGER'); --IN 사용
+
+----직업이 CLERK 이거나 MANAGER가 아닌 사원 출력
+SELECT * FROM EMP
+WHERE JOB != 'CLERK' AND JOB != 'MANAGER'; 
+
+SELECT * FROM EMP
+WHERE JOB NOT IN('CLERK','MANAGER'); --NOT IN 사용
+
+----------------------------------------------------------------------------------
+
+--LIKE
+--인덱스를 타지 않기 때문에 검색이 상당히 느린 경우
+--1)LIKE 연산
+
+--2)원본 컬럼에 변형을 가하는 경우 EX.SUBSTR
+----------------------------------------------------------------------------------
+
+--사원명이 M으로 시작하는 사원 출력
+SELECT * FROM EMP
+WHERE ENAME >= 'M' AND ENAME < 'N'; --LIKE 사용 X -->검색 속도 빠름, 권장
+
+SELECT * FROM EMP
+WHERE ENAME LIKE 'M%'; --LIKE 사용
+
+--글자 자르기 함수 : SUBSTR(값, 몇번째, 몇글자)
+SELECT SUBSTR('ABCDEFG',3,4) FROM DUAL;
+--이름이 M으로 시작하는 사람, SUBSTR 사용
+SELECT * FROM EMP
+WHERE SUBSTR(ENAME,1,1)='M';
+
+--LIKE 추가
+--사원명의 두번째 글자가 A인 사원 출력
+SELECT SUBSTR(ENAME,2,1),ENAME FROM EMP;
+
+SELECT * FROM EMP
+WHERE SUBSTR(ENAME,2,1)='A';
+
+SELECT * FROM EMP
+WHERE ENAME LIKE '_A%';
+-- % : 앞/뒤에 해당글자가 포함되는 경우, 앞/뒤에 글자가 있던 없던 상관없음
+-- _ :한글자
+
+--이름의 세번째 글자가 R인경우 출력
+SELECT * FROM EMP
+WHERE ENAME LIKE '__R%';
+
+--이름의 마지막 글자가 N은 경우 출력
+SELECT * FROM EMP
+WHERE ENAME LIKE '%N';
+
+```
